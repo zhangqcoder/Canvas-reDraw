@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button onclick="startDrawLine()">作图</button>
+    <button onclick="submit()">提交作图</button>
+    <button onclick="draw(0,0)">回显</button>
+    <canvas id="canvas" width="400" height="400" style="margin:1%;border: 1px solid blue;"></canvas>
+    <script>
+        var coordinates = [], can, ctx, isAllowDrawLine;
+        function windowToCanvas(canvas, x, y) {
+            //获取canvas元素距离窗口的一些属性
+            let rect = canvas.getBoundingClientRect()
+            return {
+                x: x - rect.left * (canvas.width / rect.width),
+                y: y - rect.top * (canvas.height / rect.height)
+            }
+        }
+        //绘制路线
+        function startDrawLine() {
+            let self = this;
+            can = document.getElementById("canvas");
+            ctx = can.getContext("2d");
+            //设置线条颜色
+            ctx.strokeStyle = 'red';
+            (function () {
+                if (!can || !can.getContext) {
+                    return false
+                } else {
+                    isAllowDrawLine = false;
+                    //按下鼠标左键
+                    can.onmousedown = function (e) {
+                        var o = { s: { x: 0, y: 0 }, point: [] };
+                        isAllowDrawLine = true;
+                        coordinates.push(o);
+                        let ele = self.windowToCanvas(can, e.clientX, e.clientY);
+                        let { x, y } = ele;
+                        (o.s.x = x, o.s.y = y);
+
+                        ctx.moveTo(x, y);
+                        console.log("获取点击值x", x);
+                        console.log("获取点击值y", y);
+                        // coordinates.push({ x: x, y: y })
+                        ctx.beginPath();
+                        can.onmousemove = (e) => {
+                            if (isAllowDrawLine) {
+
+                                let ele = self.windowToCanvas(can, e.clientX, e.clientY);
+                                let { x, y } = ele;
+                                console.log("获取移动值x", x);
+                                console.log("获取移动值y", y);
+                                o.point.push({ x: x, y: y });
+
+                                ctx.lineTo(x, y)
+                                ctx.stroke()
+
+                            }
+                        }
+
+                    };
+                    console.log("获取位置=>>", self.pointsGather);
+                    //松开鼠标时
+                    can.onmouseup = function () {
+                        isAllowDrawLine = false;
+                    }
+                }
+            })()
+        }
+        function submit() {
+            (coordinates.length > 0) && (
+                console.log(coordinates),
+                can.onmousedown = null,
+                ctx.clearRect(0, 0, 400, 400)
+            )
+
+        }
+
+        function draw(i) {
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "red";
+            ctx.beginPath();
+            if (i < coordinates.length) {
+                console.log(i)
+                var dTimer = setTimeout(() => {
+                    ctx.moveTo(coordinates[i].s.x, coordinates[i].s.y);
+                    reDraw(i, 0)
+                    if (dTimer) {
+                        clearTimeout(dTimer)
+                        dTimer = null
+                    }
+                    ctx.closePath()
+                }, 500)
+            } else {
+                return
+            }
+
+        }
+        function reDraw(i, j) {
+            if (j < coordinates[i].point.length) {
+                var rTimer = setTimeout( _ => {
+                    ctx.lineTo(coordinates[i].point[j].x, coordinates[i].point[j].y)
+                    ctx.stroke();
+                    if (rTimer) {
+                        clearTimeout(rTimer)
+                        rTimer = null
+                    }
+                    j++
+                    reDraw(i, j)
+                }, 30)
+            } else {
+                i++
+                draw(i)
+                return false
+            }
+        }
+    </script>
+</body>
+
+</html>
